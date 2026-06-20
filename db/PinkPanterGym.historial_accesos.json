@@ -1,9 +1,35 @@
-[{
-  "_id": {
-    "$oid": "6a36e639c58d8d8f877f0486"
+[
+  {
+    "_id": {
+      "$oid": "6a36e639c58d8d8f877f0486"
+    },
+    "id_socio": "S7XJ9B2J",
+    "nombre_completo": "Fer Islas",
+    "fecha_hora": "2026-06-20T13:00:00Z",
+    "tipo_movimiento": "Entrada"
   },
-  "id_socio": "S7XJ9B2J",
-  "nombre_completo": "Fer Islas",
-  "fecha_hora": "2026-06-20T13:00:00Z",
-  "tipo_movimiento": "Entrada"
-}]
+  {
+    "id_socio": "EJUA4NJC",
+    "nombre_completo": "jafet",
+    "fecha_hora": "2026-06-20T22:15:17.070Z",
+    "tipo_movimiento": "Entrada"
+  },
+  {
+    "id_socio": "EJUA4NJC",
+    "nombre_completo": "jafet",
+    "fecha_hora": "2026-06-20T22:15:55.028Z",
+    "tipo_movimiento": "Salida"
+  },
+  {
+    "id_socio": "EJUA4NJC",
+    "nombre_completo": "jafet",
+    "fecha_hora": "2026-06-20T22:16:51.759Z",
+    "tipo_movimiento": "Entrada"
+  },
+  {
+    "id_socio": "DUW32EJT",
+    "nombre_completo": "emilio",
+    "fecha_hora": "2026-06-20T22:17:32.396Z",
+    "tipo_movimiento": "Entrada"
+  }
+]

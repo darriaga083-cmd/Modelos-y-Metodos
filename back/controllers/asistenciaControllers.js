@@ -1,55 +1,68 @@
 // Archivo de control de asistencia
 
-// Importamos la lista de clientes para validar que existan
-const { clientesBD } = require('./clienteController');
+const fs = require('fs');
+const path = require('path');
+const clienteController = require('./clienteController');
 
-let asistenciasBD = [];
+const rutaAsistencias = path.join(__dirname, '../../db/PinkPanterGym.historial_accesos.json');
+
+function leerAsistencias() {
+  if (!fs.existsSync(rutaAsistencias)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(rutaAsistencias, 'utf8'));
+  } catch (e) { return []; }
+}
+
+function guardarAsistencias(data) {
+  fs.writeFileSync(rutaAsistencias, JSON.stringify(data, null, 2), 'utf8');
+}
 
 const registrarChecada = (req, res) => {
-    const { idInput } = req.body;
+  const { idInput } = req.body;
 
-    if (!idInput) {
-        return res.status(400).json({ error: "El ID es obligatorio." });
-    }
+  if (!idInput) {
+    return res.status(400).json({ error: "El ID es obligatorio." });
+  }
 
-    // 1. Validar si el cliente existe en nuestro registro
-    const cliente = clientesBD.find(c => c.id === idInput.toUpperCase().trim());
-    if (!cliente) {
-        return res.status(404).json({ error: "El ID no corresponde a ningún cliente registrado." });
-    }
+  // 🎯 Obtenemos los clientes directo de la persistencia del archivo JSON
+  const clientesBD = clienteController.clientesBD;
+  
+  const cliente = clientesBD.find(c => 
+    (c.id_socio && c.id_socio.toUpperCase().trim() === idInput.toUpperCase().trim()) || 
+    (c.id && c.id.toUpperCase().trim() === idInput.toUpperCase().trim())
+  );
 
-    // 2. Determinar dinámicamente si es Entrada o Salida
-    const historialCliente = asistenciasBD.filter(a => a.idCliente === cliente.id);
-    let proximoMovimiento = "ENTRADA";
+  if (!cliente) {
+    return res.status(404).json({ error: "El ID no corresponde a ningún cliente registrado." });
+  }
 
-    if (historialCliente.length > 0) {
-        const ultimoRegistro = historialCliente[historialCliente.length - 1];
-        proximoMovimiento = ultimoRegistro.tipo === "ENTRADA" ? "SALIDA" : "ENTRADA";
-    }
+  const asistenciasBD = leerAsistencias();
+  const historialCliente = asistenciasBD.filter(a => a.id_socio === (cliente.id_socio || cliente.id));
+  let proximoMovimiento = "Entrada";
 
-    // 3. Guardar asistencia
-    const nuevaAsistencia = {
-        idCliente: cliente.id,
-        nombreCliente: cliente.nombre,
-        tipo: proximoMovimiento,
-        timestamp: new Date()
-    };
+  if (historialCliente.length > 0) {
+    const ultimoRegistro = historialCliente[historialCliente.length - 1];
+    proximoMovimiento = ultimoRegistro.tipo_movimiento === "Entrada" ? "Salida" : "Entrada";
+  }
 
-    asistenciasBD.push(nuevaAsistencia);
+  const nuevaAsistencia = {
+    id_socio: cliente.id_socio || cliente.id,
+    nombre_completo: cliente.nombre_apellidos || cliente.nombre,
+    fecha_hora: new Date().toISOString(),
+    tipo_movimiento: proximoMovimiento
+  };
 
-    res.status(200).json({
-        mensaje: `Registro de ${proximoMovimiento} exitoso.`,
-        cliente: {
-            id: cliente.id,
-            nombre: cliente.nombre,
-            tipoMovimiento: proximoMovimiento,
-            hora: nuevaAsistencia.timestamp.toLocaleString('es-MX')
-        }
-    });
+  asistenciasBD.push(nuevaAsistencia);
+  guardarAsistencias(asistenciasBD); // 💾 Persistido en el JSON de asistencias
+
+  res.status(200).json({
+    mensaje: `¡${proximoMovimiento} registrada con éxito!`,
+    asistencia: nuevaAsistencia
+  });
 };
 
 const obtenerAsistencias = (req, res) => {
-    res.json(asistenciasBD);
+  res.json(leerAsistencias());
 };
 
 module.exports = { registrarChecada, obtenerAsistencias };

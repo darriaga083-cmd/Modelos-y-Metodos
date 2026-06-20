@@ -189,7 +189,7 @@ a { color: var(--rosa-claro); }
     <div class="table-responsive mb-5">
       <table class="table table-gym align-middle">
         <thead><tr><th>ID Socio</th><th>Nombre</th><th>Plan</th><th>Estado</th><th>Próximo pago</th></tr></thead>
-        <tbody>
+        <tbody id="tabla-pagos-cuerpo">
           <tr>
             <td><span class="id-badge" style="font-size:1rem;padding:.2rem .6rem;">A1B2C3</span></td>
             <td>María López</td><td>Mensual</td>
@@ -471,12 +471,61 @@ a { color: var(--rosa-claro); }
   // NOTA PARA EL EQUIPO DE BASE DE DATOS:
   // Esta contraseña es solo una simulación para poder probar la interfaz.
   // Aquí se debe reemplazar por la consulta real a la base de datos.
-  const ADMIN_PASSWORD_DEMO = "admin123";
+  // URL base de tu Backend corriendo en Node.js
+  // URL base de tu Backend corriendo en Node.js
+  const API_BASE_URL = "http://localhost:5000/api";
 
   function mostrarPantalla(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('d-none'));
     document.getElementById(id).classList.remove('d-none');
     window.scrollTo(0, 0);
+
+    if (id === 'pantalla-horarios') {
+      cargarTablaClientesReales();
+    }
+  }
+
+  function cargarTablaClientesReales() {
+    fetch('http://localhost:5000/api/clientes')
+      .then(res => res.json())
+      .then(clientes => {
+        const tablaSocios = document.getElementById('tabla-pagos-cuerpo');
+        if (!tablaSocios) return;
+
+        // Limpiamos por completo los socios estáticos simulados
+        tablaSocios.innerHTML = '';
+
+        if (clientes.length === 0) {
+          tablaSocios.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hay socios registrados todavía.</td></tr>`;
+          return;
+        }
+
+        // Dibujamos los clientes provenientes de los archivos de MongoDB
+        clientes.forEach(cliente => {
+          // Extraemos variables manejando los dos formatos (el de Mongo y el del front)
+          const idSocio = cliente.id_socio || cliente.id || "S/ID";
+          const nombreSocio = cliente.nombre_apellidos || cliente.nombre || "Sin Nombre";
+          const plan = (cliente.membresia_actual && cliente.membresia_actual.plan) || "Mensual";
+          const estado = (cliente.membresia_actual && cliente.membresia_actual.estado) || "Al día";
+          
+          // Formatear la fecha del próximo pago
+          let proximoPago = "Pendiente";
+          if (cliente.membresia_actual && cliente.membresia_actual.proximo_pago) {
+            proximoPago = new Date(cliente.membresia_actual.proximo_pago).toLocaleDateString('es-MX');
+          }
+
+          const fila = document.createElement('tr');
+          fila.innerHTML = `
+            <td><span class="id-badge" style="font-size:1rem;padding:.2rem .6rem;">${idSocio}</span></td>
+            <td>${nombreSocio}</td>
+            <td>${plan}</td>
+            <td><span class="badge ${estado === 'Al día' ? 'bg-success' : 'bg-danger'}">${estado}</span></td>
+            <td>${proximoPago}</td>
+          `;
+          tablaSocios.appendChild(fila);
+        });
+      })
+      .catch(err => console.error('Error al cargar la tabla de socios:', err));
   }
 
   // Abre el registro de entrada/salida en una pestaña nueva del navegador
@@ -495,7 +544,7 @@ a { color: var(--rosa-claro); }
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-
+    
     // Coloca el logo en todos los lugares donde aparece
     document.querySelectorAll('.logo-gym').forEach(img => img.src = LOGO_SRC);
 
@@ -511,32 +560,57 @@ a { color: var(--rosa-claro); }
       e.preventDefault();
       const pass = document.getElementById('adminPassword').value;
       const errorBox = document.getElementById('loginError');
-      if (pass === ADMIN_PASSWORD_DEMO) {
+
+      // Cambia esto para que coincida exactamente con la ruta de tu server.js
+      fetch(`http://localhost:5000/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: pass })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
         errorBox.classList.add('d-none');
         document.getElementById('adminPassword').value = '';
         mostrarPantalla('pantalla-menu');
-      } else {
+      })
+      .catch(() => {
         errorBox.classList.remove('d-none');
-      }
+      });
     });
-
+    
     // ---- Modal de contraseña para Horarios y Pagos ----
     document.getElementById('pwdSubmit').addEventListener('click', function () {
       const val = document.getElementById('pwdInput').value;
       const errorBox = document.getElementById('pwdError');
-      if (val === ADMIN_PASSWORD_DEMO) {
+
+      // Ajusta la URL de igual forma aquí
+      fetch(`http://localhost:5000/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: val })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(() => {
         errorBox.classList.add('d-none');
         document.getElementById('pwdInput').value = '';
         const modalEl = document.getElementById('pwdModal');
         const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
         modal.hide();
         mostrarPantalla('pantalla-horarios');
-      } else {
+      })
+      .catch(() => {
         errorBox.classList.remove('d-none');
-      }
+      });
     });
 
     // ---- Vista previa de la foto en Nuevo Registro ----
+    let fotoBase64 = null; // Guardará el string de la foto
     document.getElementById('foto').addEventListener('change', function (e) {
       const file = e.target.files[0];
       const preview = document.getElementById('fotoPreview');
@@ -545,6 +619,7 @@ a { color: var(--rosa-claro); }
         reader.onload = function (ev) {
           preview.src = ev.target.result;
           preview.classList.remove('d-none');
+          fotoBase64 = ev.target.result; // Asignamos la foto convertida
         };
         reader.readAsDataURL(file);
       }
@@ -563,17 +638,36 @@ a { color: var(--rosa-claro); }
         return;
       }
 
-      // NOTA PARA EL EQUIPO DE BASE DE DATOS:
-      // Aquí se debe enviar nombre, edad, correo, número de emergencia,
-      // foto y el ID generado hacia el backend para guardarlos.
       const id = generarID();
 
-      document.getElementById('cardNombre').textContent = nombre;
-      document.getElementById('cardId').textContent = id;
-      document.getElementById('cardFecha').textContent = new Date().toLocaleDateString('es-MX');
-      document.getElementById('btnUsarId').dataset.id = id;
+      // === FETCH AL BACKEND: ENVIAR DATOS DEL CLIENTE ===
+      fetch(`${API_BASE_URL}/clientes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          nombre,
+          edad,
+          correo,
+          emergencia,
+          foto: fotoBase64
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        // Si todo sale bien, pintamos los datos que devolvió el Backend
+        document.getElementById('cardNombre').textContent = data.cliente.nombre;
+        document.getElementById('cardId').textContent = data.cliente.id;
+        document.getElementById('cardFecha').textContent = new Date(data.cliente.fechaRegistro).toLocaleDateString('es-MX');
+        document.getElementById('btnUsarId').dataset.id = data.cliente.id;
 
-      mostrarPantalla('pantalla-registro-exitoso');
+        mostrarPantalla('pantalla-registro-exitoso');
+      })
+      .catch(err => alert('Error al comunicar con el servidor backend.'));
     });
 
     // ---- Botón "Usar este ID y entrar al gimnasio" ----
@@ -600,15 +694,38 @@ a { color: var(--rosa-claro); }
         errorBox.classList.remove('d-none');
         return;
       }
-      errorBox.classList.add('d-none');
 
-      // NOTA PARA EL EQUIPO DE BASE DE DATOS:
-      // Aquí se debe consultar el ID en la base de datos y determinar
-      // si corresponde a una ENTRADA o una SALIDA.
-      document.getElementById('accesoId').textContent = valor;
-      document.getElementById('accesoHora').textContent = 'Hora: ' + new Date().toLocaleString('es-MX');
+      // === FETCH AL BACKEND: REGISTRAR ASISTENCIA (ENTRADA/SALIDA AUTOMÁTICA) ===
+      fetch(`${API_BASE_URL}/asistencia/checar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idInput: valor })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          errorBox.textContent = data.error;
+          errorBox.classList.remove('d-none');
+          return;
+        }
+        errorBox.classList.add('d-none');
 
-      mostrarPantalla('pantalla-acceso');
+        // Adaptado para leer la estructura real de la exportación de MongoDB
+        const nombre = data.asistencia.nombre_completo;
+        const tipo = data.asistencia.tipo_movimiento; // "Entrada" o "Salida"
+        const horaFmt = new Date(data.asistencia.fecha_hora).toLocaleTimeString('es-MX', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+
+        // Mostramos el nombre y tipo de movimiento calculados por tu backend
+        document.getElementById('accesoId').textContent = `${nombre} (${tipo})`;
+        document.getElementById('accesoHora').textContent = 'Hora: ' + horaFmt;
+
+        mostrarPantalla('pantalla-acceso');
+      })
+      .catch(err => alert('Error al procesar el acceso en el servidor.'));
     });
 
     // ---- Botón "Registrar otro acceso" ----
