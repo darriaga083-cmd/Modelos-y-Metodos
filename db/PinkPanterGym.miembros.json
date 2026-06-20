@@ -1,0 +1,51 @@
+[{
+  "_id": {
+    "$oid": "6a36e5b6c58d8d8f877f047d"
+  },
+  "id_socio": "A1B2C3",
+  "nombre_apellidos": "María López",
+  "edad": 24,
+  "correo_electronico": "maria.lopez@gmail.com",
+  "numero_emergencia": "5551234567",
+  "foto_identificacion": "maria.jpg",
+  "fecha_registro": "2026-06-18T00:00:00Z",
+  "membresia_actual": {
+    "plan": "Mensual",
+    "estado": "Al día",
+    "proximo_pago": "2026-07-15T00:00:00Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a36e5b6c58d8d8f877f047e"
+  },
+  "id_socio": "X9Y8Z7",
+  "nombre_apellidos": "Carlos Ramírez",
+  "edad": 31,
+  "correo_electronico": "carlos.ramirez@gmail.com",
+  "numero_emergencia": "5559876543",
+  "foto_identificacion": "carlos.jpg",
+  "fecha_registro": "2026-05-02T00:00:00Z",
+  "membresia_actual": {
+    "plan": "Trimestral",
+    "estado": "Vencido",
+    "proximo_pago": "2026-06-02T00:00:00Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a36e5b6c58d8d8f877f047f"
+  },
+  "id_socio": "S7XJ9B2J",
+  "nombre_apellidos": "Fer Islas",
+  "edad": 22,
+  "correo_electronico": "fer.islas@gmail.com",
+  "numero_emergencia": "5550001122",
+  "foto_identificacion": "fer.jpg",
+  "fecha_registro": "2026-06-18T00:00:00Z",
+  "membresia_actual": {
+    "plan": "Mensual",
+    "estado": "Al día",
+    "proximo_pago": "2026-07-18T00:00:00Z"
+  }
+}]

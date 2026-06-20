@@ -1,0 +1,27 @@
+[{
+  "_id": {
+    "$oid": "6a36e825c58d8d8f877f048d"
+  },
+  "dia": "Sábado",
+  "apertura": "08:00",
+  "cierre": "18:00",
+  "aforo_maximo": 60
+},
+{
+  "_id": {
+    "$oid": "6a36e825c58d8d8f877f048e"
+  },
+  "dia": "Domingo",
+  "apertura": "09:00",
+  "cierre": "14:00",
+  "aforo_maximo": 40
+},
+{
+  "_id": {
+    "$oid": "6a36e825c58d8d8f877f048c"
+  },
+  "dia": "Lunes a viernes",
+  "apertura": "06:00",
+  "cierre": "22:00",
+  "aforo_maximo": 80
+}]
